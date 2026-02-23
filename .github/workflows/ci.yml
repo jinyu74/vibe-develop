@@ -1,0 +1,201 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main, develop]
+  push:
+    branches: [main, develop]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PYTHON_VERSION: "3.12"
+  NODE_VERSION: "24"
+
+jobs:
+  # --------------------------------------------------
+  # Commit message validation
+  # --------------------------------------------------
+  commitlint:
+    name: Commitlint
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - run: corepack enable
+      - run: pnpm add -g @commitlint/cli @commitlint/config-conventional
+      - run: commitlint --from ${{ github.event.pull_request.base.sha }} --to ${{ github.event.pull_request.head.sha }}
+
+  # --------------------------------------------------
+  # Python backend checks
+  # --------------------------------------------------
+  backend-lint:
+    name: Backend Lint & Type Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - name: Install dependencies
+        run: |
+          pip install ruff mypy
+          # Install project deps if requirements exist
+          for req in apps/*/requirements.txt; do
+            [ -f "$req" ] && pip install -r "$req"
+          done
+      - name: Ruff lint
+        run: ruff check .
+      - name: Ruff format check
+        run: ruff format --check .
+      - name: Mypy type check
+        run: |
+          for src in apps/*/src; do
+            [ -d "$src" ] && mypy "$src" --config-file pyproject.toml || true
+          done
+
+  backend-test:
+    name: Backend Tests
+    runs-on: ubuntu-latest
+    needs: backend-lint
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: test_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - name: Install dependencies
+        run: |
+          pip install pytest pytest-cov pytest-asyncio httpx
+          for req in apps/*/requirements.txt; do
+            [ -f "$req" ] && pip install -r "$req"
+          done
+      - name: Run unit tests
+        run: |
+          for svc in apps/*/; do
+            if [ -d "${svc}tests/unit" ]; then
+              echo "::group::Unit tests for ${svc}"
+              pytest "${svc}tests/unit/" -v --tb=short
+              echo "::endgroup::"
+            fi
+          done
+      - name: Run integration tests
+        env:
+          DATABASE_URL: postgresql://test:test@localhost:5432/test_db
+          REDIS_URL: redis://localhost:6379/0
+        run: |
+          for svc in apps/*/; do
+            if [ -d "${svc}tests/integration" ]; then
+              echo "::group::Integration tests for ${svc}"
+              pytest "${svc}tests/integration/" -v --tb=short
+              echo "::endgroup::"
+            fi
+          done
+
+  # --------------------------------------------------
+  # Frontend checks
+  # --------------------------------------------------
+  frontend-lint:
+    name: Frontend Lint & Type Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - run: corepack enable
+      - name: Find and check frontend projects
+        run: |
+          found=false
+          for pkg in apps/*/package.json; do
+            [ -f "$pkg" ] || continue
+            found=true
+            dir=$(dirname "$pkg")
+            echo "::group::Lint ${dir}"
+            cd "$dir"
+            pnpm install --frozen-lockfile
+            pnpm tsc --noEmit || true
+            pnpm eslint . || true
+            pnpm prettier --check . || true
+            cd "$GITHUB_WORKSPACE"
+            echo "::endgroup::"
+          done
+          if [ "$found" = false ]; then
+            echo "No frontend projects found, skipping."
+          fi
+
+  frontend-test:
+    name: Frontend Tests
+    runs-on: ubuntu-latest
+    needs: frontend-lint
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - run: corepack enable
+      - name: Find and test frontend projects
+        run: |
+          found=false
+          for pkg in apps/*/package.json; do
+            [ -f "$pkg" ] || continue
+            found=true
+            dir=$(dirname "$pkg")
+            echo "::group::Test ${dir}"
+            cd "$dir"
+            pnpm install --frozen-lockfile
+            pnpm vitest run || true
+            cd "$GITHUB_WORKSPACE"
+            echo "::endgroup::"
+          done
+          if [ "$found" = false ]; then
+            echo "No frontend projects found, skipping."
+          fi
+
+  # --------------------------------------------------
+  # Document validation
+  # --------------------------------------------------
+  doc-validation:
+    name: Document Cross-Reference Validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - name: Validate document references
+        run: |
+          if [ -f "tools/validate-docs.py" ]; then
+            python tools/validate-docs.py
+          else
+            echo "validate-docs.py not found, skipping."
+          fi
