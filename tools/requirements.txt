@@ -1,0 +1,5 @@
+# Document Extractor 의존성
+# 설치: pip install -r tools/requirements.txt
+
+python-pptx>=0.6.21     # PPT 텍스트/이미지 추출
+PyMuPDF>=1.23.0         # PDF 텍스트/이미지 추출 (import fitz)

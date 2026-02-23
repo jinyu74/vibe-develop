@@ -1,0 +1,93 @@
+---
+description: 서비스별 규칙 템플릿 - 새 서비스 추가 시 복사하여 {service}-rules.mdc로 이름 변경 후 사용
+globs:
+alwaysApply: false
+---
+
+# [서비스명] 서비스 규칙
+
+> 이 파일은 서비스별 규칙 템플릿입니다.
+> 새 서비스를 추가할 때 이 파일을 복사하여 `{service}-rules.mdc`로 저장합니다.
+> 예: `deep-ecg-analysis-rules.mdc`, `auth-service-rules.mdc`
+
+## 설정 방법 (복사 후 반드시 수행)
+
+1. 이 파일을 `.cursor/rules/{service}-rules.mdc`로 복사
+2. 파일 상단의 YAML frontmatter를 아래와 같이 수정:
+
+```yaml
+---
+description: {service} 서비스 개발 규칙
+globs: apps/{service}/**
+alwaysApply: false
+---
+```
+
+> `globs` 패턴을 설정해야 해당 서비스 코드 파일을 열 때 이 규칙이 자동 적용됩니다.
+> `alwaysApply: false` + `globs` 조합이면 해당 경로의 파일을 열 때만 활성화됩니다.
+
+| 설정 | 의미 | 예시 |
+|------|------|------|
+| `globs: apps/auth/**` | auth 서비스 파일을 열 때 자동 적용 | Python, config, test 파일 모두 포함 |
+| `globs: apps/auth/src/**/*.py` | Python 소스만 대상 | 테스트 파일 제외 |
+| `alwaysApply: true` | 항상 적용 (비권장) | 전역 규칙에만 사용 |
+
+3. 아래 `[서비스명]`, `[service-name]` 등 placeholder를 실제 값으로 교체
+4. 각 섹션을 서비스에 맞게 작성
+
+## 서비스 정보
+
+- **서비스명**: [service-name]
+- **현재 버전**: v0.0.1
+- **기술 스택**: [예: Python 3.12, FastAPI, PostgreSQL 15]
+- **CONTEXT.md**: `docs/{service}/CONTEXT.md`
+
+## 도메인 용어
+
+이 서비스에서 사용하는 비즈니스 용어:
+
+| 용어 | 정의 | 코드에서의 표현 |
+|------|------|----------------|
+| (예: 심전도) | (12-리드 심전도 신호) | `Ecg`, `EcgSignal` |
+| (예: 분석 결과) | (AI 분석으로 생성된 진단 결과) | `AnalysisResult` |
+
+## 아키텍처 패턴
+
+이 서비스에 적용되는 고유 패턴:
+
+- (예: Clean Architecture - domain, application, infrastructure 레이어 분리)
+- (예: CQRS - 읽기/쓰기 모델 분리)
+- (예: Event-driven - 분석 완료 시 이벤트 발행)
+
+## 외부 의존성
+
+| 외부 서비스 | 용도 | 연동 방식 | 환경 변수 |
+|------------|------|---------|----------|
+| (예: AI Model Server) | 심전도 분석 | REST API | `MODEL_SERVER_URL` |
+
+## 코딩 규칙 (서비스 고유)
+
+project-conventions에 추가로 이 서비스에만 적용되는 규칙:
+
+- (예: 의료 데이터는 반드시 암호화하여 저장)
+- (예: 분석 결과는 불변 - 수정 불가, 새 분석만 가능)
+- (예: 모든 API 응답에 요청 추적 ID 포함)
+
+## 파일 구조
+
+```
+apps/{service}/
+├── src/
+│   ├── api/v1/          # API 라우터
+│   ├── core/            # 설정, 의존성
+│   ├── domain/          # 비즈니스 로직
+│   │   ├── {domain1}/   # (예: auth/)
+│   │   └── {domain2}/   # (예: analysis/)
+│   ├── infrastructure/  # DB, 외부 API
+│   └── models/          # 데이터 모델
+└── tests/
+```
+
+## 작업 시 주의사항
+
+- (서비스 고유 주의사항 기록)
