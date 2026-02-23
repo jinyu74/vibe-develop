@@ -181,8 +181,9 @@ pip install ruff mypy pytest pytest-cov pytest-asyncio httpx
 ### Frontend (React + TypeScript + Vite)
 
 ```bash
+corepack enable
 cd apps/{frontend-service}
-npm install
+pnpm install
 ```
 
 ### Pre-commit 훅 (전체 팀 필수)
@@ -209,16 +210,20 @@ python tools/validate-docs.py --service auth-api
 
 ## 기술 스택
 
-| 영역 | 기술 |
-|------|------|
-| Backend | Python 3.12+, FastAPI, PostgreSQL 15+, Celery, Redis |
-| Desktop | Go, Wails |
-| Frontend | React 18+, TypeScript 5+, Vite |
-| Reverse Proxy | Nginx |
-| CI | GitHub Actions |
-| Linter/Formatter | ruff (Python), ESLint + Prettier (TS), commitlint |
-| Type Check | mypy (Python), tsc (TypeScript) |
-| Test | pytest (Python), Vitest (Frontend) |
+| 영역 | 기술 | 버전 |
+|------|------|------|
+| Backend | Python, FastAPI | 3.12+ |
+| Database | PostgreSQL | 15+ |
+| Task Queue | Celery + Redis | |
+| Desktop | Go, Wails | Go 1.25+, Wails v2.11.0 |
+| Frontend | React, TypeScript, Vite | React 19.x, TS 5.9.x, Vite 7.x |
+| Runtime | Node.js | 24.x (24.13.0) |
+| Package Manager | pnpm | 10.x (10.28.2) |
+| Reverse Proxy | Nginx | |
+| CI | GitHub Actions | |
+| Linter/Formatter | ruff (Python), ESLint + Prettier (TS), commitlint | |
+| Type Check | mypy (Python), tsc (TypeScript) | |
+| Test | pytest (Python), Vitest (Frontend), go test (Go) | |
 
 ---
 

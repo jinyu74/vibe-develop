@@ -39,7 +39,7 @@ alwaysApply: false
 
 - **서비스명**: [service-name]
 - **현재 버전**: v0.0.1
-- **기술 스택**: [예: Python 3.12, FastAPI, PostgreSQL 15]
+- **기술 스택**: [예: Python 3.12, FastAPI, PostgreSQL 15 / Go 1.25, Wails v2.11 / React 19, TS 5.9, Vite 7]
 - **CONTEXT.md**: `docs/{service}/CONTEXT.md`
 
 ## 도메인 용어

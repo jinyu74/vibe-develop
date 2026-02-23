@@ -11,7 +11,7 @@
 
 - **서비스 코드명**: [service-name]
 - **현재 작업 버전**: v0.0.1
-- **기술 스택**: Python, FastAPI, PostgreSQL
+- **기술 스택**: [예: Python 3.12, FastAPI, PostgreSQL / Go 1.25, Wails v2.11 / React 19, TypeScript 5.9, Vite 7]
 - **담당**: [팀/담당자]
 
 ---

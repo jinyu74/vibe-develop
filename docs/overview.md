@@ -15,9 +15,10 @@
 
 <!--
 예시:
-| deep-ecg-analysis | v0.0.2 | Python, FastAPI | 개발중 | docs/deep-ecg-analysis/CONTEXT.md |
-| auth-service | v0.0.1 | Python, FastAPI | 개발중 | docs/auth-service/CONTEXT.md |
-| web-frontend | v0.0.1 | React, TypeScript | 기획중 | docs/web-frontend/CONTEXT.md |
+| deep-ecg-analysis | v0.0.2 | Python 3.12, FastAPI, PostgreSQL | 개발중 | docs/deep-ecg-analysis/CONTEXT.md |
+| auth-service | v0.0.1 | Python 3.12, FastAPI, Celery | 개발중 | docs/auth-service/CONTEXT.md |
+| desktop-app | v0.0.1 | Go 1.25, Wails v2.11 | 개발중 | docs/desktop-app/CONTEXT.md |
+| web-frontend | v0.0.1 | React 19, TypeScript 5.9, Vite 7 | 기획중 | docs/web-frontend/CONTEXT.md |
 -->
 
 ---

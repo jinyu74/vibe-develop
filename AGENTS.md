@@ -462,15 +462,20 @@ PR을 올리기 전에 아래를 모두 확인한다:
 
 ### 기술 스택
 
-| 영역 | 기술 | 버전 |
-|------|------|------|
-| **Backend** | Python, FastAPI | 3.12+ |
-| **Database** | PostgreSQL | 15+ |
-| **Task Queue** | Celery + Redis | - |
-| **Desktop** | Go, Wails | - |
-| **Frontend** | React, TypeScript, Vite | React 18+, TS 5+ |
-| **Reverse Proxy** | Nginx | - |
-| **CI** | GitHub Actions | - |
+| 영역 | 기술 | 버전 | 비고 |
+|------|------|------|------|
+| **Backend** | Python, FastAPI | 3.12+ | |
+| **Database** | PostgreSQL | 15+ | |
+| **Task Queue** | Celery + Redis | | |
+| **Desktop** | Go | 1.25+ | 1.25.8 최신 패치 |
+| **Desktop** | Wails | v2.11.0 | |
+| **Frontend** | React | 19.x (19.2.4) | |
+| **Frontend** | TypeScript | 5.9.x (5.9.3) | |
+| **Frontend** | Vite | 7.x (7.3.1) | |
+| **Runtime** | Node.js | 24.x (24.13.0) | LTS 기준 |
+| **Package Manager** | pnpm | 10.x (10.28.2) | Frontend 패키지 관리 |
+| **Reverse Proxy** | Nginx | | |
+| **CI** | GitHub Actions | | |
 
 ### CI 파이프라인 필수 단계
 
