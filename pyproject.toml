@@ -33,6 +33,8 @@ ignore = [
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**/*.py" = ["S101", "T20"]
+# CLI 도구: print() 사용 허용, os.path 사용 허용 (pathlib 강제 해제)
+"tools/**/*.py" = ["T20", "PTH", "S603", "S607"]
 
 [tool.ruff.format]
 quote-style = "double"
