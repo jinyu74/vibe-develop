@@ -118,7 +118,6 @@ def validate_service(svc: str, version: str, result: ValidationResult) -> None:
 
     # 6. Check S-IDs reference valid F-IDs
     screen_text = read_file(base / "02-screen-spec.md")
-    s_ids = extract_ids(screen_text, S_ID_PATTERN)
     screen_f_ids = extract_ids(screen_text, F_ID_PATTERN)
     for fid in screen_f_ids:
         if fid not in f_ids and f_ids:
@@ -202,9 +201,8 @@ def main() -> int:
     if result.ok:
         print(f"\nResult: PASS ({len(result.warnings)} warnings)")
         return 0
-    else:
-        print(f"\nResult: FAIL ({len(result.errors)} errors, {len(result.warnings)} warnings)")
-        return 1
+    print(f"\nResult: FAIL ({len(result.errors)} errors, {len(result.warnings)} warnings)")
+    return 1
 
 
 if __name__ == "__main__":

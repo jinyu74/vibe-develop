@@ -124,7 +124,7 @@ def extract_pdf(file_path: str, assets_dir: str) -> str:
 
 
 def extract_md(file_path: str, assets_dir: str) -> str:
-    with open(file_path, "r", encoding="utf-8") as f:
+    with open(file_path, encoding="utf-8") as f:
         content = f.read()
 
     source_dir = os.path.dirname(os.path.abspath(file_path))
@@ -150,8 +150,7 @@ def extract_md(file_path: str, assets_dir: str) -> str:
 
         return match.group(0)
 
-    content = re.sub(image_pattern, copy_and_rewrite, content)
-    return content
+    return re.sub(image_pattern, copy_and_rewrite, content)
 
 
 EXTRACTORS = {
