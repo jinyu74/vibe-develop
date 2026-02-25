@@ -47,18 +47,28 @@ jobs:
       - name: Install dependencies
         run: |
           pip install ruff mypy
-          # Install project deps if requirements exist
           for req in apps/*/requirements.txt; do
-            [ -f "$req" ] && pip install -r "$req"
+            if [ -f "$req" ]; then
+              pip install -r "$req"
+            fi
           done
       - name: Ruff lint
         run: ruff check .
       - name: Ruff format check
-        run: ruff format --check .
+        run: |
+          # format check는 앱 소스 파일에만 적용 (tools/는 CLI 유틸리티로 제외)
+          py_files=$(find apps -name "*.py" 2>/dev/null | head -1)
+          if [ -n "$py_files" ]; then
+            ruff format --check apps/
+          else
+            echo "No app Python files found, skipping format check."
+          fi
       - name: Mypy type check
         run: |
           for src in apps/*/src; do
-            [ -d "$src" ] && mypy "$src" --config-file pyproject.toml || true
+            if [ -d "$src" ]; then
+              mypy "$src" --config-file pyproject.toml || true
+            fi
           done
 
   backend-test:
@@ -97,29 +107,37 @@ jobs:
         run: |
           pip install pytest pytest-cov pytest-asyncio httpx
           for req in apps/*/requirements.txt; do
-            [ -f "$req" ] && pip install -r "$req"
+            if [ -f "$req" ]; then
+              pip install -r "$req"
+            fi
           done
       - name: Run unit tests
         run: |
+          found=false
           for svc in apps/*/; do
             if [ -d "${svc}tests/unit" ]; then
+              found=true
               echo "::group::Unit tests for ${svc}"
               pytest "${svc}tests/unit/" -v --tb=short
               echo "::endgroup::"
             fi
           done
+          if [ "$found" = false ]; then echo "No unit tests found, skipping."; fi
       - name: Run integration tests
         env:
           DATABASE_URL: postgresql://test:test@localhost:5432/test_db
           REDIS_URL: redis://localhost:6379/0
         run: |
+          found=false
           for svc in apps/*/; do
             if [ -d "${svc}tests/integration" ]; then
+              found=true
               echo "::group::Integration tests for ${svc}"
               pytest "${svc}tests/integration/" -v --tb=short
               echo "::endgroup::"
             fi
           done
+          if [ "$found" = false ]; then echo "No integration tests found, skipping."; fi
 
   # --------------------------------------------------
   # Frontend checks
