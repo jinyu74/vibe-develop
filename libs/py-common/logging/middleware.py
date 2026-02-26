@@ -43,9 +43,7 @@ class RequestLoggingMiddleware:
                 status_code = message["status"]
                 if "headers" not in message:
                     message["headers"] = []
-                message["headers"].append(
-                    (b"x-request-id", request_id.encode())
-                )
+                message["headers"].append((b"x-request-id", request_id.encode()))
             await original_send(message)
 
         try:
@@ -61,5 +59,7 @@ class RequestLoggingMiddleware:
                 duration_ms=duration_ms,
             )
             structlog.contextvars.unbind_contextvars(
-                "request_id", "method", "path",
+                "request_id",
+                "method",
+                "path",
             )
