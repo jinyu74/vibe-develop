@@ -1,0 +1,124 @@
+version: "3.9"
+
+x-common-env: &common-env
+  TZ: Asia/Seoul
+
+services:
+  # ── Infrastructure ──────────────────────────────────
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      <<: *common-env
+      POSTGRES_USER: vibe
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
+      POSTGRES_DB: vibe
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U vibe"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    environment:
+      <<: *common-env
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── P2 BE: analysis-api ─────────────────────────────
+  analysis-api:
+    build:
+      context: ../apps/analysis-api
+      dockerfile: Dockerfile
+    environment:
+      <<: *common-env
+      DATABASE_URL: postgresql://vibe:${POSTGRES_PASSWORD:-changeme}@postgres:5432/vibe
+      REDIS_URL: redis://redis:6379/0
+      LOG_LEVEL: info
+      LOG_FORMAT: json
+    ports:
+      - "${ANALYSIS_API_PORT:-8001}:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  # ── P2 BE: Celery worker ────────────────────────────
+  analysis-worker:
+    build:
+      context: ../apps/analysis-api
+      dockerfile: Dockerfile
+    command: celery -A src.infrastructure.celery_app worker -l info -Q analysis
+    environment:
+      <<: *common-env
+      DATABASE_URL: postgresql://vibe:${POSTGRES_PASSWORD:-changeme}@postgres:5432/vibe
+      REDIS_URL: redis://redis:6379/0
+      LOG_LEVEL: info
+      LOG_FORMAT: json
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  # ── P4 BE: monitor-api ──────────────────────────────
+  monitor-api:
+    build:
+      context: ../apps/monitor-api
+      dockerfile: Dockerfile
+    environment:
+      <<: *common-env
+      DATABASE_URL: postgresql://vibe:${POSTGRES_PASSWORD:-changeme}@postgres:5432/vibe
+      REDIS_URL: redis://redis:6379/1
+      LOG_LEVEL: info
+      LOG_FORMAT: json
+    ports:
+      - "${MONITOR_API_PORT:-8002}:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  # ── P4 BE: Celery worker ────────────────────────────
+  monitor-worker:
+    build:
+      context: ../apps/monitor-api
+      dockerfile: Dockerfile
+    command: celery -A src.infrastructure.celery_app worker -l info -Q monitor
+    environment:
+      <<: *common-env
+      DATABASE_URL: postgresql://vibe:${POSTGRES_PASSWORD:-changeme}@postgres:5432/vibe
+      REDIS_URL: redis://redis:6379/1
+      LOG_LEVEL: info
+      LOG_FORMAT: json
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  # ── Nginx reverse proxy ─────────────────────────────
+  nginx:
+    image: nginx:1.27-alpine
+    ports:
+      - "${NGINX_HTTP_PORT:-80}:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+    depends_on:
+      - analysis-api
+      - monitor-api
+
+volumes:
+  pg-data:
