@@ -1,0 +1,54 @@
+# ============================================================
+# CODEOWNERS — 서비스별 코드 소유권
+# PR 리뷰 자동 지정에 사용됩니다.
+# 패턴: 마지막 매치가 우선 적용됩니다.
+# ============================================================
+
+# ── 전역 (프로젝트 리드) ──────────────────────────────
+*                                   @vuno/project-leads
+
+# ── CI/CD & 인프라 ────────────────────────────────────
+.github/                            @vuno/devops
+deploy/                             @vuno/devops
+tools/                              @vuno/devops
+
+# ── 공용 규칙 & 문서 ──────────────────────────────────
+AGENTS.md                           @vuno/project-leads
+.cursor/rules/project-conventions.mdc  @vuno/project-leads
+.cursor/rules/doc-conversion.mdc    @vuno/project-leads
+docs/_templates/                    @vuno/project-leads
+
+# ── P1: file-watcher (Go + Wails) ─────────────────────
+apps/file-watcher/                  @vuno/p1-team
+libs/go-common/                     @vuno/p1-team @vuno/p3-team
+docs/file-watcher/                  @vuno/p1-team
+.cursor/rules/file-watcher.mdc     @vuno/p1-team
+
+# ── P2 BE: analysis-api (Python + FastAPI) ─────────────
+apps/analysis-api/                  @vuno/p2-be-team
+libs/py-common/                     @vuno/p2-be-team @vuno/p4-be-team
+docs/analysis-api/                  @vuno/p2-be-team
+.cursor/rules/analysis-api.mdc     @vuno/p2-be-team
+
+# ── P2 FE: analysis-web (React + Vite) ────────────────
+apps/analysis-web/                  @vuno/p2-fe-team
+docs/analysis-web/                  @vuno/p2-fe-team
+.cursor/rules/analysis-web.mdc     @vuno/p2-fe-team
+
+# ── P3: file-relay (Go + Wails) ───────────────────────
+apps/file-relay/                    @vuno/p3-team
+docs/file-relay/                    @vuno/p3-team
+.cursor/rules/file-relay.mdc       @vuno/p3-team
+
+# ── P4 BE: monitor-api (Python + FastAPI) ──────────────
+apps/monitor-api/                   @vuno/p4-be-team
+docs/monitor-api/                   @vuno/p4-be-team
+.cursor/rules/monitor-api.mdc      @vuno/p4-be-team
+
+# ── P4 FE: monitor-web (React + Vite) ─────────────────
+apps/monitor-web/                   @vuno/p4-fe-team
+docs/monitor-web/                   @vuno/p4-fe-team
+.cursor/rules/monitor-web.mdc      @vuno/p4-fe-team
+
+# ── Boilerplate (변경 시 프로젝트 리드 리뷰 필수) ──────
+_boilerplate/                       @vuno/project-leads
