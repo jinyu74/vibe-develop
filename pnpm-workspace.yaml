@@ -1,0 +1,3 @@
+packages:
+  - "apps/analysis-web"
+  - "apps/monitor-web"
