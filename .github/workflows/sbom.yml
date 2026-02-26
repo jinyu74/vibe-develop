@@ -1,0 +1,70 @@
+name: SBOM Generation
+
+on:
+  push:
+    branches: [main]
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  sbom:
+    name: Generate SBOM
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - name: go-modules
+            tool: syft
+            path: "."
+            output: sbom-go.spdx.json
+          - name: python-deps
+            tool: syft
+            path: "."
+            output: sbom-python.spdx.json
+          - name: node-deps
+            tool: syft
+            path: "."
+            output: sbom-node.spdx.json
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Syft
+        uses: anchore/sbom-action/download-syft@v0
+
+      - name: Generate SBOM (${{ matrix.name }})
+        run: syft dir:${{ matrix.path }} -o spdx-json=${{ matrix.output }}
+
+      - name: Upload SBOM artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.output }}
+          path: ${{ matrix.output }}
+          retention-days: 90
+
+  vulnerability-scan:
+    name: Vulnerability Scan
+    runs-on: ubuntu-latest
+    needs: sbom
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Grype
+        uses: anchore/scan-action/download-grype@v4
+
+      - name: Download SBOMs
+        uses: actions/download-artifact@v4
+        with:
+          merge-multiple: true
+
+      - name: Scan for vulnerabilities
+        run: |
+          for sbom_file in sbom-*.spdx.json; do
+            if [ -f "$sbom_file" ]; then
+              echo "::group::Scanning $sbom_file"
+              grype "sbom:$sbom_file" --fail-on critical || true
+              echo "::endgroup::"
+            fi
+          done
