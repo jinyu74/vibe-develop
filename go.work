@@ -1,0 +1,7 @@
+go 1.23
+
+use (
+	./apps/file-watcher
+	./apps/file-relay
+	./libs/go-common
+)
