@@ -1,0 +1,90 @@
+---
+description: P3 file-relay 서비스 개발 규칙
+globs: apps/file-relay/**
+alwaysApply: false
+---
+
+# file-relay (P3) 서비스 규칙
+
+## 서비스 정보
+
+- **서비스명**: file-relay
+- **프로젝트 코드**: P3
+- **현재 버전**: v0.0.1
+- **기술 스택**: Go 1.25+, Wails v2.11.0, React 19 (embedded FE)
+- **CONTEXT.md**: `docs/file-relay/CONTEXT.md`
+
+## 서비스 역할
+
+P1(file-watcher)이 로컬에 복사한 파일을 감시하여 미분석 파일을
+P2(analysis-api)에 REST API로 전송하고, 분석 결과를 수신하여 결과 파일을 생성하는 데스크탑 앱.
+
+## 데이터 흐름
+
+```
+[P1 수신 디렉토리] --파일 감시--> [P3] --REST API--> [P2 analysis-api]
+                                  ↑                       |
+                                  |     분석 결과 수신      |
+                    [결과 디렉토리] <----- 결과 파일 생성 ----
+```
+
+## 도메인 용어
+
+| 용어 | 정의 | 코드에서의 표현 |
+|------|------|----------------|
+| 수신 디렉토리 | P1이 파일을 복사하는 로컬 경로 (감시 대상) | `IncomingDir` |
+| 결과 디렉토리 | 분석 결과 파일을 저장하는 경로 | `ResultsDir` |
+| 분석 서버 | P2의 FastAPI 엔드포인트 | `AnalysisServer` |
+| 미분석 파일 | 아직 P2에 전송하지 않은 새 파일 | `UnanalyzedFile` |
+
+## 아키텍처 패턴
+
+- Clean Architecture: `internal/domain`, `internal/application`, `internal/infrastructure`
+- 구조화된 로깅: `log/slog` 기반 JSON 로그
+- 설정 관리: Viper로 YAML 기반 설정 파일
+- 공유 라이브러리: `libs/go-common/` 참조
+
+## 외부 의존성
+
+| 외부 서비스 | 용도 | 연동 방식 | 환경 변수 |
+|------------|------|---------|----------|
+| P2 analysis-api | 파일 분석 요청 | REST API (multipart/form-data) | `ANALYSIS_API_URL` |
+
+## 결과 처리 방식
+
+P2로부터 분석 결과를 수신하여:
+- **A)** `/results/`에 별도 결과 파일 생성
+- **B)** 전송했던 원본 파일에 분석 결과를 업데이트하여 `/results/`에 생성
+
+A/B 혼합 가능하며, 구체적 방식은 설계 시 결정.
+
+## 코딩 규칙
+
+- P2 API 호출 실패 시 재시도 로직 필수 (지수 백오프)
+- 분석 완료/실패 상태를 추적하여 중복 전송 방지
+- 대용량 파일 전송 시 타임아웃 적절히 설정
+- 에러 로그에 파일명, 서버 응답, 재시도 횟수 포함
+
+## 파일 구조
+
+```
+apps/file-relay/
+├── main.go
+├── go.mod
+├── internal/
+│   ├── domain/        # 비즈니스 엔티티, 인터페이스
+│   ├── application/   # 유스케이스 (감시, 전송, 결과 처리)
+│   ├── infrastructure/ # HTTP 클라이언트, 파일시스템
+│   └── ui/            # Wails 바인딩
+├── frontend/          # React (Wails embedded)
+│   ├── src/
+│   └── package.json
+└── configs/
+    └── config.yaml
+```
+
+## 작업 시 주의사항
+
+- P1(file-watcher)과는 **별도 프로세스** (통합 금지)
+- P3→P2 분석 결과 수신 방식(동기/비동기)은 아직 미확정 — 인터페이스로 추상화
+- P2 API 스펙은 `docs/analysis-api/` 문서의 `03-api-contract.md` 참조

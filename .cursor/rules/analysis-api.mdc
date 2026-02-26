@@ -1,0 +1,73 @@
+---
+description: P2 BE analysis-api 서비스 개발 규칙
+globs: apps/analysis-api/**
+alwaysApply: false
+---
+
+# analysis-api (P2 Backend) 서비스 규칙
+
+## 서비스 정보
+
+- **서비스명**: analysis-api
+- **프로젝트 코드**: P2 (Backend)
+- **현재 버전**: v0.0.1
+- **기술 스택**: Python 3.12+, FastAPI, Celery, Redis, PostgreSQL 15+
+- **CONTEXT.md**: `docs/analysis-api/CONTEXT.md`
+
+## 서비스 역할
+
+P3(file-relay)로부터 파일을 수신하여 AI 분석을 수행하고 결과를 반환하는 백엔드 API 서버.
+
+## 도메인 용어
+
+| 용어 | 정의 | 코드에서의 표현 |
+|------|------|----------------|
+| 분석 요청 | P3에서 전송한 파일 분석 작업 | `AnalysisRequest` |
+| 분석 결과 | AI 모델이 생성한 분석 데이터 | `AnalysisResult` |
+| 분석 작업 | Celery 비동기 태스크 | `AnalysisTask` |
+
+## 아키텍처 패턴
+
+- Layered Architecture: `api/` → `service/` → `repository/`
+- Pydantic V2 모델로 요청/응답 스키마 정의
+- Alembic으로 DB 마이그레이션 관리
+- Celery + Redis로 비동기 작업 처리
+- 공유 라이브러리: `libs/py-common/` 참조
+
+## 외부 의존성
+
+| 외부 서비스 | 용도 | 연동 방식 | 환경 변수 |
+|------------|------|---------|----------|
+| PostgreSQL | 분석 데이터 저장 | SQLAlchemy | `DATABASE_URL` |
+| Redis | Celery 브로커 | Celery | `REDIS_URL` |
+| AI Model | 파일 분석 | 내부 호출 또는 API | `MODEL_ENDPOINT` |
+
+## 코딩 규칙
+
+- 모든 API 엔드포인트에 Pydantic V2 스키마 적용
+- DB 모델과 API 스키마를 분리 (domain model ≠ API schema)
+- Celery 태스크는 멱등성 보장
+- 에러 응답은 표준 에러 스키마 사용
+- 린트: ruff, 타입: mypy (pyproject.toml 전역 설정)
+
+## 파일 구조
+
+```
+apps/analysis-api/
+├── src/
+│   ├── api/v1/          # FastAPI 라우터
+│   ├── core/            # 설정, 의존성
+│   ├── service/         # 비즈니스 로직
+│   ├── repository/      # DB 접근
+│   ├── models/          # SQLAlchemy 모델
+│   ├── schemas/         # Pydantic 스키마
+│   └── tasks/           # Celery 태스크
+├── alembic/             # DB 마이그레이션
+├── tests/
+└── pyproject.toml
+```
+
+## 작업 시 주의사항
+
+- P3와의 API 계약은 `docs/analysis-api/*/03-api-contract.md`에 정의
+- analysis-web(P2 FE)과 공유하는 타입은 `03-api-contract.md`에서 관리

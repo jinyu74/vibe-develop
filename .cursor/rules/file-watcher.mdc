@@ -1,0 +1,82 @@
+---
+description: P1 file-watcher 서비스 개발 규칙
+globs: apps/file-watcher/**
+alwaysApply: false
+---
+
+# file-watcher (P1) 서비스 규칙
+
+## 서비스 정보
+
+- **서비스명**: file-watcher
+- **프로젝트 코드**: P1
+- **현재 버전**: v0.0.1
+- **기술 스택**: Go 1.25+, Wails v2.11.0, React 19 (embedded FE)
+- **CONTEXT.md**: `docs/file-watcher/CONTEXT.md`
+
+## 서비스 역할
+
+N대의 원격 서버 폴더를 SFTP로 감시하여 새 파일을 로컬로 복사하고,
+P3(file-relay)가 생성한 분석 결과 파일을 원본 리모트 서버로 반송하는 데스크탑 앱.
+
+## 데이터 흐름
+
+```
+[원격 서버 N대] --SFTP 감시--> [P1] --로컬 복사--> [P1 수신 디렉토리]
+                                                        ↓ (P3가 감시)
+[원격 서버] <--SFTP 전송-- [P1] <--결과 감지-- [P3 결과 디렉토리]
+```
+
+## 도메인 용어
+
+| 용어 | 정의 | 코드에서의 표현 |
+|------|------|----------------|
+| 원격 서버 | SFTP로 접속하는 파일 소스 서버 | `RemoteServer` |
+| 감시 폴더 | 원격 서버에서 모니터링하는 디렉토리 | `WatchDirectory` |
+| 수신 디렉토리 | 로컬 PC에 파일을 복사하는 대상 경로 | `IncomingDir` |
+| 결과 디렉토리 | P3가 분석 결과를 저장하는 로컬 경로 | `ResultsDir` |
+
+## 아키텍처 패턴
+
+- Clean Architecture: `internal/domain`, `internal/application`, `internal/infrastructure`
+- 구조화된 로깅: `log/slog` 기반 JSON 로그
+- 설정 관리: Viper로 YAML 기반 설정 파일
+- 공유 라이브러리: `libs/go-common/` 참조 (SFTP, 파일 감시, 로깅)
+
+## 외부 의존성
+
+| 외부 서비스 | 용도 | 연동 방식 | 환경 변수 |
+|------------|------|---------|----------|
+| 원격 서버 N대 | 파일 소스 | SFTP | 설정 파일로 관리 |
+| P3 결과 디렉토리 | 분석 결과 감지 | 로컬 파일시스템 (폴링 또는 이벤트) | `RESULTS_DIR` |
+
+## 코딩 규칙
+
+- SFTP 접속 정보는 반드시 설정 파일에서 로드 (하드코딩 금지)
+- 파일 전송 실패 시 재시도 로직 필수 (최소 3회)
+- 서버별 독립 goroutine으로 감시하되 graceful shutdown 보장
+- 에러 발생 시 구조화된 로그에 서버명, 경로, 에러 상세 포함
+
+## 파일 구조
+
+```
+apps/file-watcher/
+├── main.go
+├── go.mod
+├── internal/
+│   ├── domain/        # 비즈니스 엔티티, 인터페이스
+│   ├── application/   # 유스케이스 (감시, 전송)
+│   ├── infrastructure/ # SFTP 클라이언트, 파일시스템
+│   └── ui/            # Wails 바인딩
+├── frontend/          # React (Wails embedded)
+│   ├── src/
+│   └── package.json
+└── configs/
+    └── config.yaml
+```
+
+## 작업 시 주의사항
+
+- P3(file-relay)와는 **별도 프로세스** (통합 금지)
+- P1↔P3 통신은 파일 시스템 기반 (직접 IPC 없음)
+- 결과 감지 방식(폴링 vs 이벤트)은 아직 미확정 — 설계 시 인터페이스로 추상화

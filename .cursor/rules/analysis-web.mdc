@@ -1,0 +1,70 @@
+---
+description: P2 FE analysis-web 서비스 개발 규칙
+globs: apps/analysis-web/**
+alwaysApply: false
+---
+
+# analysis-web (P2 Frontend) 서비스 규칙
+
+## 서비스 정보
+
+- **서비스명**: analysis-web
+- **프로젝트 코드**: P2 (Frontend)
+- **현재 버전**: v0.0.1
+- **기술 스택**: React 19.x, TypeScript 5.9.x, Vite 7.x, pnpm 10.x
+- **CONTEXT.md**: `docs/analysis-web/CONTEXT.md`
+
+## 서비스 역할
+
+분석 서비스(P2)의 웹 대시보드. 분석 요청 상태 조회, 결과 시각화, 관리 기능 제공.
+
+## 도메인 용어
+
+| 용어 | 정의 | 코드에서의 표현 |
+|------|------|----------------|
+| 분석 대시보드 | 분석 결과를 시각화하는 메인 화면 | `Dashboard` |
+| 분석 결과 | API에서 가져온 분석 데이터 | `AnalysisResult` |
+
+## 아키텍처 패턴
+
+- Feature-Sliced Design (FSD): `app/`, `pages/`, `widgets/`, `features/`, `entities/`, `shared/`
+- 상태 관리: Zustand
+- 서버 상태: TanStack Query (React Query)
+- 라우팅: React Router 또는 TanStack Router
+- 공유 UI: `libs/ui-common/` (중복 발생 시 추출)
+
+## 외부 의존성
+
+| 외부 서비스 | 용도 | 연동 방식 | 환경 변수 |
+|------------|------|---------|----------|
+| analysis-api | 백엔드 API | REST API (fetch/axios) | `VITE_API_URL` |
+
+## 코딩 규칙
+
+- 컴포넌트는 함수형 + TypeScript strict mode
+- API 호출은 반드시 TanStack Query 훅으로 감싸기
+- 스타일링: Tailwind CSS 또는 CSS Modules (설계 시 결정)
+- 린트: ESLint, 포맷: Prettier, 테스트: Vitest
+
+## 파일 구조
+
+```
+apps/analysis-web/
+├── src/
+│   ├── app/             # 앱 설정, 라우터, 프로바이더
+│   ├── pages/           # 페이지 컴포넌트
+│   ├── widgets/         # 복합 UI 블록
+│   ├── features/        # 기능 단위 로직
+│   ├── entities/        # 도메인 엔티티
+│   └── shared/          # 유틸, 타입, UI 프리미티브
+├── public/
+├── index.html
+├── vite.config.ts
+├── tsconfig.json
+└── package.json
+```
+
+## 작업 시 주의사항
+
+- API 타입은 `docs/analysis-api/*/03-api-contract.md`의 공유 타입 기준
+- UI 컴포넌트 중복 시 `libs/ui-common/`으로 추출 검토

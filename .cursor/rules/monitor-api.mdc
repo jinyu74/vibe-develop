@@ -1,0 +1,70 @@
+---
+description: P4 BE monitor-api 서비스 개발 규칙
+globs: apps/monitor-api/**
+alwaysApply: false
+---
+
+# monitor-api (P4 Backend) 서비스 규칙
+
+## 서비스 정보
+
+- **서비스명**: monitor-api
+- **프로젝트 코드**: P4 (Backend)
+- **현재 버전**: v0.0.1
+- **기술 스택**: Python 3.12+, FastAPI, Celery, Redis, PostgreSQL 15+
+- **CONTEXT.md**: `docs/monitor-api/CONTEXT.md`
+
+## 서비스 역할
+
+시스템 전체(P1~P3)의 상태, 로그, 통계를 수집하여 모니터링 대시보드에 제공하는 백엔드 API 서버.
+
+## 도메인 용어
+
+| 용어 | 정의 | 코드에서의 표현 |
+|------|------|----------------|
+| 서비스 상태 | P1~P3 각 서비스의 헬스 상태 | `ServiceStatus` |
+| 시스템 로그 | 수집된 구조화 로그 데이터 | `SystemLog` |
+| 통계 | 파일 처리 건수, 성공/실패율 등 | `Statistics` |
+
+## 아키텍처 패턴
+
+- Layered Architecture: `api/` → `service/` → `repository/`
+- Pydantic V2 모델로 요청/응답 스키마 정의
+- Alembic으로 DB 마이그레이션 관리
+- Celery + Redis로 주기적 데이터 수집
+- 공유 라이브러리: `libs/py-common/` 참조
+
+## 외부 의존성
+
+| 외부 서비스 | 용도 | 연동 방식 | 환경 변수 |
+|------------|------|---------|----------|
+| PostgreSQL | 모니터링 데이터 저장 | SQLAlchemy | `DATABASE_URL` |
+| Redis | Celery 브로커 | Celery | `REDIS_URL` |
+
+## 코딩 규칙
+
+- analysis-api와 동일한 Python 코딩 규칙 적용
+- 모든 API 엔드포인트에 Pydantic V2 스키마 적용
+- 린트: ruff, 타입: mypy
+
+## 파일 구조
+
+```
+apps/monitor-api/
+├── src/
+│   ├── api/v1/
+│   ├── core/
+│   ├── service/
+│   ├── repository/
+│   ├── models/
+│   ├── schemas/
+│   └── tasks/
+├── alembic/
+├── tests/
+└── pyproject.toml
+```
+
+## 작업 시 주의사항
+
+- monitor-web(P4 FE)과 공유하는 타입은 `03-api-contract.md`에서 관리
+- analysis-api와 공통 패턴은 `libs/py-common/`으로 추출

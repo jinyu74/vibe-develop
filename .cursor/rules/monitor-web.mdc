@@ -1,0 +1,68 @@
+---
+description: P4 FE monitor-web 서비스 개발 규칙
+globs: apps/monitor-web/**
+alwaysApply: false
+---
+
+# monitor-web (P4 Frontend) 서비스 규칙
+
+## 서비스 정보
+
+- **서비스명**: monitor-web
+- **프로젝트 코드**: P4 (Frontend)
+- **현재 버전**: v0.0.1
+- **기술 스택**: React 19.x, TypeScript 5.9.x, Vite 7.x, pnpm 10.x
+- **CONTEXT.md**: `docs/monitor-web/CONTEXT.md`
+
+## 서비스 역할
+
+모니터링 서비스(P4)의 웹 대시보드. 시스템 상태, 로그 조회, 통계 시각화 제공.
+
+## 도메인 용어
+
+| 용어 | 정의 | 코드에서의 표현 |
+|------|------|----------------|
+| 대시보드 | 시스템 전체 상태를 보여주는 메인 화면 | `Dashboard` |
+| 로그 뷰어 | 수집된 로그를 검색/필터링하는 화면 | `LogViewer` |
+
+## 아키텍처 패턴
+
+- Feature-Sliced Design (FSD)
+- 상태 관리: Zustand
+- 서버 상태: TanStack Query
+- 공유 UI: `libs/ui-common/` (중복 발생 시 추출)
+
+## 외부 의존성
+
+| 외부 서비스 | 용도 | 연동 방식 | 환경 변수 |
+|------------|------|---------|----------|
+| monitor-api | 백엔드 API | REST API | `VITE_API_URL` |
+
+## 코딩 규칙
+
+- analysis-web과 동일한 React 코딩 규칙 적용
+- 컴포넌트는 함수형 + TypeScript strict mode
+- 린트: ESLint, 포맷: Prettier, 테스트: Vitest
+
+## 파일 구조
+
+```
+apps/monitor-web/
+├── src/
+│   ├── app/
+│   ├── pages/
+│   ├── widgets/
+│   ├── features/
+│   ├── entities/
+│   └── shared/
+├── public/
+├── index.html
+├── vite.config.ts
+├── tsconfig.json
+└── package.json
+```
+
+## 작업 시 주의사항
+
+- API 타입은 `docs/monitor-api/*/03-api-contract.md`의 공유 타입 기준
+- analysis-web과 중복되는 UI는 `libs/ui-common/`으로 추출 검토
