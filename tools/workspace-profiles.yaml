@@ -1,0 +1,69 @@
+# Workspace Profiles for Sparse Checkout
+# Each profile defines which files/directories are visible when working on a specific service.
+# Used by tools/start-work.sh to isolate AI context per service.
+
+_common: &common
+  - AGENTS.md
+  - README.md
+  - docs/_templates/**
+  - _boilerplate/**
+  - tools/**
+  - .cursor/rules/project-conventions.mdc
+  - .cursor/rules/doc-conversion.mdc
+  - .gitignore
+  - .pre-commit-config.yaml
+  - commitlint.config.js
+
+file-watcher:
+  include:
+    - *common
+    - apps/file-watcher/**
+    - libs/go-common/**
+    - docs/file-watcher/**
+    - .cursor/rules/file-watcher.mdc
+    - go.work
+
+file-relay:
+  include:
+    - *common
+    - apps/file-relay/**
+    - libs/go-common/**
+    - docs/file-relay/**
+    - .cursor/rules/file-relay.mdc
+    - go.work
+
+analysis-api:
+  include:
+    - *common
+    - apps/analysis-api/**
+    - libs/py-common/**
+    - docs/analysis-api/**
+    - .cursor/rules/analysis-api.mdc
+    - pyproject.toml
+
+analysis-web:
+  include:
+    - *common
+    - apps/analysis-web/**
+    - libs/ui-common/**
+    - docs/analysis-web/**
+    - .cursor/rules/analysis-web.mdc
+    - pnpm-workspace.yaml
+
+monitor-api:
+  include:
+    - *common
+    - apps/monitor-api/**
+    - libs/py-common/**
+    - docs/monitor-api/**
+    - .cursor/rules/monitor-api.mdc
+    - pyproject.toml
+
+monitor-web:
+  include:
+    - *common
+    - apps/monitor-web/**
+    - libs/ui-common/**
+    - docs/monitor-web/**
+    - .cursor/rules/monitor-web.mdc
+    - pnpm-workspace.yaml
